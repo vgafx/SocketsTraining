@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "tcpserversocket.h"
+#include "udpsocket.h"
 
 void HandleTCPClient(TCPSocket *sock, size_t length) {
   std::cout << "Handling client ";
@@ -57,13 +58,27 @@ int main(int argc, char *argv[])
     const char *message = msg.c_str();
     size_t msg_length = strlen(message);
 
+    unsigned short client_port = 17893;
+    std::string client_address = "localhost";
+
 
     //Client
     if (id == 1){
+        /*TCP*/
+//        try {
+//            TCPSocket client_sock(server_address, server_port);
+//            std::cout << "Client sending msg\n";
+//            client_sock.send(message, msg_length);
+//        } catch (SocketException& e) {
+//            std::cerr << e.what() <<"\n";
+//            exit(1);
+//        }
+
+        /*UDP*/
         try {
-            TCPSocket client_sock(server_address, server_port);
-            std::cout << "Client sending msg\n";
-            client_sock.send(message, msg_length);
+            UDPSocket u_sock;
+
+            u_sock.sendTo(message, msg_length, server_address, server_port);
         } catch (SocketException& e) {
             std::cerr << e.what() <<"\n";
             exit(1);
@@ -72,17 +87,34 @@ int main(int argc, char *argv[])
     }//Server
     else if (id == 2)
     {
-        try {
-            TCPServerSocket server_sock(server_port);
+        /*TCP*/
+//        try {
+//            TCPServerSocket server_sock(server_port);
 
+//            for (;;) {
+//                HandleTCPClient(server_sock.accept(), msg_length);
+//            }
+//        } catch (SocketException& e) {
+//            std::cerr << e.what() <<"\n";
+//            exit(1);
+//        }
+
+        /*UDP*/
+        try {
+            UDPSocket s_sock(server_port);
+            ssize_t rcv_size;
+            char serv_buffer[msg_length];
             for (;;) {
-                HandleTCPClient(server_sock.accept(), msg_length);
+                rcv_size = s_sock.recvFrom(serv_buffer, msg_length, client_address, client_port);
+                std::cout << "Received from " << client_address << ":" << client_port << " the message:\n";
+                std::cout << serv_buffer << "\n";
             }
 
         } catch (SocketException& e) {
             std::cerr << e.what() <<"\n";
             exit(1);
         }
+
     }
 
 /*TO-DO
